@@ -1,0 +1,23 @@
+#!/bin/sh
+wan="re1"
+LOGFILE=/var/log/pingtest.log
+
+currip=$(ifconfig $wan | grep "inet " | cut -d " " -f 2)
+if test -z "$currip"; then
+	echo `date +%Y%m%d.%H%M%S` "Detected empty IP on $wan! Will try again in 120 seconds." >> $LOGFILE
+	sleep 120
+	currip=$(ifconfig $wan | grep "inet " | cut -d " " -f 2)
+	if test -z "$currip"; then
+		echo `date +%Y%m%d.%H%M%S` "2nd try: Still empty IP on $wan! Will fix now." >> $LOGFILE
+		ifconfig $wan down
+		sleep 10
+		ifconfig $wan up
+		sleep 20
+		dhclient $wan
+		echo `date +%Y%m%d.%H%M%S` "Fixing done!" >> $LOGFILE
+	else
+		echo `date +%Y%m%d.%H%M%S` "2nd try: $wan has IP $currip; ok" >> $LOGFILE
+	fi
+else
+	echo `date +%Y%m%d.%H%M%S` "$wan has IP $currip; ok" >> $LOGFILE
+fi
